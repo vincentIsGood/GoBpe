@@ -49,7 +49,6 @@ func (trainer *Trainer) Train(sentence string){
         
         newVocab := string(*pairedToken)
         if len(newVocab) >= trainer.ngramMax{
-            // TODO: fix the long repeating word problem
             break
         }
         trainer.vocab.Add(newVocab)
