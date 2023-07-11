@@ -6,15 +6,15 @@ import (
 )
 
 type Trie struct {
-    rootNode  *TrieNode
-    longestWordLen int
+    RootNode  *TrieNode  `json:"root"`
+    LongestWordLen int   `json:"maxlen"`
 }
 
 type TrieNode struct {
-    value     rune
-    counter   int
-    nextNodes map[rune]*TrieNode
-    endOfWord bool
+    Value     rune                `json:"v"`
+    Counter   int                 `json:"c"`
+    NextNodes map[rune]*TrieNode  `json:"next"`
+    EndOfWord bool                `json:"ends"`
 }
 
 type TrieEntry struct {
@@ -26,48 +26,48 @@ type TrieEntry struct {
 
 func New() *Trie {
     return &Trie{
-        rootNode: newTrieNode(0),
-        longestWordLen: 0,
+        RootNode: newTrieNode(0),
+        LongestWordLen: 0,
     }
 }
 
 func newTrieNode(value rune) *TrieNode{
     return &TrieNode{
-        value:     value,
-        counter:   1,
-        nextNodes: make(map[rune]*TrieNode),
-        endOfWord: false,
+        Value:     value,
+        Counter:   1,
+        NextNodes: make(map[rune]*TrieNode),
+        EndOfWord: false,
     }
 }
 
 func (trie *Trie) Add(word string){
-    currentNode := trie.rootNode
+    currentNode := trie.RootNode
     var lastNode *TrieNode = currentNode
-    if len(word) > trie.longestWordLen{
-        trie.longestWordLen = len(word)
+    if len(word) > trie.LongestWordLen{
+        trie.LongestWordLen = len(word)
     }
     for _, char := range word{
-        node := currentNode.nextNodes[char]
+        node := currentNode.NextNodes[char]
         if node != nil{
             lastNode = node
-            node.counter++
+            node.Counter++
             currentNode = node
             continue
         }
 
         // create new entry for this char
         lastNode = newTrieNode(char)
-        currentNode.nextNodes[char] = lastNode
-        currentNode = currentNode.nextNodes[char]
+        currentNode.NextNodes[char] = lastNode
+        currentNode = currentNode.NextNodes[char]
     }
-    lastNode.endOfWord = true
+    lastNode.EndOfWord = true
 }
 
 func (trie *Trie) Has(word string) bool{
-    currentNode := trie.rootNode
+    currentNode := trie.RootNode
     var lastNode *TrieNode = currentNode
     for _, char := range word{
-        node := currentNode.nextNodes[char]
+        node := currentNode.NextNodes[char]
         if node == nil{
             return false
         }
@@ -75,35 +75,35 @@ func (trie *Trie) Has(word string) bool{
         lastNode = node
     }
     // full word
-    if lastNode.endOfWord{
+    if lastNode.EndOfWord{
         return true
     }
     return false
 }
 
 func (trie *Trie) LongestWordLength() int{
-    return trie.longestWordLen
+    return trie.LongestWordLen
 }
 
 func (trie *Trie) GetWords() *[]*TrieEntry{
     foundWords := &[]*TrieEntry{}
-    for _, nextNode := range trie.rootNode.nextNodes{
+    for _, nextNode := range trie.RootNode.NextNodes{
         trie.walkNode(nextNode, foundWords, []rune{})
     }
     return foundWords
 }
 
 func (trie *Trie) walkNode(node *TrieNode, foundWords *[]*TrieEntry, currentString []rune){
-    currentString = append(currentString, node.value)
+    currentString = append(currentString, node.Value)
 
-    if node.endOfWord{
+    if node.EndOfWord{
         *foundWords = append(*foundWords, &TrieEntry{
             Word: string(currentString),
-            Counter: node.counter,
+            Counter: node.Counter,
         })
     }
 
-    for _, nextNode := range node.nextNodes{
+    for _, nextNode := range node.NextNodes{
         trie.walkNode(nextNode, foundWords, currentString)
     }
 }
@@ -112,17 +112,17 @@ func (trie *Trie) walkNode(node *TrieNode, foundWords *[]*TrieEntry, currentStri
 
 // Helpers
 func (trie *Trie) String() string{
-    return fmt.Sprintf("{Trie 'rootNode': %s}", trie.rootNode)
+    return fmt.Sprintf("{Trie 'rootNode': %s}", trie.RootNode)
 }
 func (node *TrieNode) String() string{
     jsonRaw, _ := json.Marshal(node)
-    return fmt.Sprintf("{TrieNode 'value': '%s', 'nextNodes': %s}", string(node.value), string(jsonRaw))
+    return fmt.Sprintf("{TrieNode 'value': '%s', 'nextNodes': %s}", string(node.Value), string(jsonRaw))
 }
-func (node *TrieNode) MarshalJSON() ([]byte, error) {
-    return json.Marshal(map[string]interface{}{
-        "value": string(node.value),
-        "counter": node.counter,
-        "nextNodes": node.nextNodes,
-        "endOfWord": node.endOfWord,
-    })
-}
+// func (node *TrieNode) MarshalJSON() ([]byte, error) {
+//     return json.Marshal(map[string]interface{}{
+//         "value": string(node.value),
+//         "counter": node.counter,
+//         "nextNodes": node.nextNodes,
+//         "endOfWord": node.endOfWord,
+//     })
+// }

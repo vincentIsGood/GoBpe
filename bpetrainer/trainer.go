@@ -1,7 +1,9 @@
 package bpetrainer
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"unsafe"
 
 	"com.vincentcodes/bpe/trie"
@@ -15,32 +17,52 @@ func (t Token) String() string{
 }
 
 type Trainer struct{
-    vocab *trie.Trie
+    Vocab *trie.Trie `json:"vocab"`
     
-    // number of occurances that makes a pair eligible to become a vocab
-    threshold int
+    // number of occurances that makes a pair eligible to become a vocab (per train basis)
+    Threshold int `json:"threshold"`
 
     // in bytes
-    ngramMax int
-    endOfToken string
+    NgramMax int `json:"ngramMax"`
+    EndOfToken string `json:"eot"`
 
-    ignoreSpaces bool
+    IgnoreSpaces bool `json:"ignoreSpaces"`
+
+    DoLog bool  `json:"dolog"`
 }
 
-func New() *Trainer{
+func New(doLog bool) *Trainer{
     return &Trainer{
-        vocab: trie.New(),
-        threshold: 2,
-        ngramMax: 15,
-        ignoreSpaces: true,
-        endOfToken: "</eot>",
+        Vocab: trie.New(),
+
+        Threshold: 2,
+        NgramMax: 15,
+        EndOfToken: "</eot>",
+
+        IgnoreSpaces: true,
+        DoLog: doLog,
     }
+}
+
+func LoadFromFile(fullFilePath string) *Trainer{
+    data, err := os.ReadFile(fullFilePath)
+    utils.PanicOnError(err)
+
+    var trainer *Trainer = &Trainer{}
+    err = json.Unmarshal(data, trainer)
+    utils.PanicOnError(err)
+    return trainer
+}
+
+func (trainer *Trainer) SaveToFile(fullFilePath string){
+    jsonRaw, _ := json.Marshal(trainer)
+    err := os.WriteFile(fullFilePath, jsonRaw, 0755)
+    utils.PanicOnError(err)
 }
 
 func (trainer *Trainer) Train(sentence string){
     trainer.learnLetters(sentence)
 
-    trainer.findPairToken(sentence)
     for true{
         pairedToken := trainer.findPairToken(sentence)
         if pairedToken == nil{
@@ -48,16 +70,16 @@ func (trainer *Trainer) Train(sentence string){
         }
         
         newVocab := string(*pairedToken)
-        if len(newVocab) >= trainer.ngramMax{
+        if len(newVocab) >= trainer.NgramMax{
             break
         }
-        trainer.vocab.Add(newVocab)
-        // fmt.Printf("'%s'\n", newVocab)
+        trainer.Vocab.Add(newVocab)
+        trainer.log("Learned '%s'", newVocab)
     }
 }
 
 func (trainer *Trainer) GetLearnedVocabs() []string{
-    entries := trainer.vocab.GetWords()
+    entries := trainer.Vocab.GetWords()
     result := []string{}
     for _, entry := range *entries{
         result = append(result, entry.Word)
@@ -67,7 +89,7 @@ func (trainer *Trainer) GetLearnedVocabs() []string{
 
 func (trainer *Trainer) learnLetters(sentence string){
     for _, intChar := range sentence{
-        trainer.vocab.Add(string(intChar))
+        trainer.Vocab.Add(string(intChar))
     }
 }
 
@@ -81,7 +103,7 @@ func (trainer *Trainer) findPairToken(sentence string) (*Token){
     frequency := len(*indexList)
     // utils.PrintObject(tokens)
     // printIndexLocation(sentence, tokens, *indexList)
-    if frequency < trainer.threshold{
+    if frequency < trainer.Threshold{
         return nil
     }
     return &token
@@ -96,10 +118,10 @@ func (trainer *Trainer) findMostFrequentPairToken(tokens *[]Token) (Token, *[]in
             break
         }
         nextToken := (*tokens)[i+1]
-        if trainer.ignoreSpaces && (utils.IsSpace[Token](token) || utils.IsSpace[Token](nextToken)){
+        if trainer.IgnoreSpaces && (utils.IsSpace[Token](token) || utils.IsSpace[Token](nextToken)){
             continue
         }
-        if combinedTokensLength(token, nextToken) >= trainer.ngramMax{
+        if combinedTokensLength(token, nextToken) >= trainer.NgramMax{
             continue
         }
         indexList := tokenToIndexListMap[token + nextToken]
@@ -120,17 +142,17 @@ func (trainer *Trainer) findMostFrequentPairToken(tokens *[]Token) (Token, *[]in
 func (trainer *Trainer) TokenizeSubwords(sentence string) *[]Token{
     // start from ngram size, shrink to smaller ngram (if not found)
     startI := 0
-    endI := utils.Min(len(sentence), trainer.ngramMax)
+    endI := utils.Min(len(sentence), trainer.NgramMax)
     tokens := []string{}
     for startI < len(sentence){
         if startI == endI{
             panic(fmt.Sprintf("IllegalState: Encountered an unknown word starting from index: %d\n", startI))
         }
         subword := sentence[startI:endI]
-        if trainer.vocab.Has(subword){
+        if trainer.Vocab.Has(subword){
             tokens = append(tokens, subword)
             startI = endI
-            endI = utils.Min(len(sentence), startI + trainer.ngramMax)
+            endI = utils.Min(len(sentence), startI + trainer.NgramMax)
         }else{
             // shrink ngram size
             endI--
