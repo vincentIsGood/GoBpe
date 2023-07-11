@@ -21,6 +21,7 @@ Usage of /tmp/go-build2260239964/b001/exe/main:
 ```
 
 ## Sample run
+### Training
 ```sh
 $ go run main.go -text "Hello, World. Hello" -train
 [+] Start training
@@ -35,6 +36,15 @@ $ go run main.go -text "test the program. Quick! Do the
 [+] Saved trainer to './trainer.json'
 [+] Learned vocabs are shown here:
 [",","s","h","p","o","r","H","He","Hel","Hell","Hello","W","u","k","w","l"," ","g","Q","!","n","i","c","d","e",".","t","te","tes","test","th","the","a","m","D"]
+```
+
+### Segmentation
+Using the newly trained tokenizer (`trainer.json`) from the above:
+```sh
+$ go run main.go -text "test the program. Quick! Do the tests now!" -load trainer.json
+[+] Loading trainer from 'trainer.json'
+[+] Do segmentation only
+["test"," ","the"," ","p","r","o","g","r","a","m","."," ","Q","u","i","c","k","!"," ","D","o"," ","the"," ","test","s"," ","n","o","w","!"]
 ```
 
 ## Test

@@ -35,4 +35,7 @@ func main(){
         utils.PrintObject(trainer.GetLearnedVocabs())
         return
     }
+
+    utils.Info("Do segmentation only")
+    utils.PrintObject(*trainer.TokenizeSubwords(*textPtr))
 }
