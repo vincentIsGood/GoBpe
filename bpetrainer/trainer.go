@@ -24,6 +24,8 @@ type Trainer struct{
 
     // in bytes
     NgramMax int `json:"ngramMax"`
+
+    // not used
     EndOfToken string `json:"eot"`
 
     IgnoreSpaces bool `json:"ignoreSpaces"`
@@ -31,7 +33,19 @@ type Trainer struct{
     DoLog bool  `json:"dolog"`
 }
 
-func New(doLog bool) *Trainer{
+func New(doLog bool, threshold int, ngramMax int) *Trainer{
+    return &Trainer{
+        Vocab: trie.New(),
+
+        Threshold: threshold,
+        NgramMax: ngramMax,
+        EndOfToken: "</eot>",
+
+        IgnoreSpaces: true,
+        DoLog: doLog,
+    }
+}
+func NewDefault(doLog bool) *Trainer{
     return &Trainer{
         Vocab: trie.New(),
 
