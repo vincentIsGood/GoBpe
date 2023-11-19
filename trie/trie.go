@@ -93,6 +93,7 @@ func (trie *Trie) GetWords() *[]*TrieEntry{
     return foundWords
 }
 
+// walk through the Trie from a `node` and add words into `foundWords`
 func (trie *Trie) walkNode(node *TrieNode, foundWords *[]*TrieEntry, currentString []rune){
     currentString = append(currentString, node.Value)
 

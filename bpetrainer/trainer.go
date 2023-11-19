@@ -107,6 +107,7 @@ func (trainer *Trainer) learnLetters(sentence string){
     }
 }
 
+// returns The most frequent token pair (combined already)
 func (trainer *Trainer) findPairToken(sentence string) (*Token){
     // eg. farmer, driver, mother, eat -> (? -> e)    most frequent 
     //                                 -> (e,? -> er) paired 
@@ -123,6 +124,9 @@ func (trainer *Trainer) findPairToken(sentence string) (*Token){
     return &token
 }
 
+// returns The most frequent token pair (combined already) and 
+//         its index list which contains the location from which 
+//         the func. has found it
 func (trainer *Trainer) findMostFrequentPairToken(tokens *[]Token) (Token, *[]int) {
     tokenToIndexListMap := make(map[Token](*[]int))
     var mostFrequentToken Token = ""
